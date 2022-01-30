@@ -3,6 +3,11 @@
 #include <algorithm>
 using namespace std;
 
+#define cerr if (cerr_disabled) {} else std::cerr
+bool cerr_disabled = true;
+// Last thing necessary to push to GitHub
+// git push origin main
+
 template <class T>
 T rankByOrder(vector<T> a, unsigned int k) {
     // Assuming that k is not zero-indexed
@@ -51,18 +56,27 @@ T linearTimeSelection(vector<T> a, unsigned int k) {
     // 1. Seperate into n/5 groups (and 1 more if n%5 != 0) 
     // and find medians of those groups
     vector<T> medians;
-    int numberOfGroups = a.size()/5; if (a.size() % 5) numberOfGroups++;   // To get into groups of 5 or fewer
+    int numberOfGroups = a.size()/5;    // To get into groups of 5 or fewer
+    auto begin = a.begin(); 
+    vector<T> five;
     for (size_t i = 0; i < numberOfGroups; i++) {
-        auto begin = a.begin()+(5*i);
-        vector<T> five(begin, begin+5); //TODO this might only work if |a| = 5
+        // Grab the next group of 5
+        begin = a.begin()+(5*i);
+        five = vector<T>(begin, begin+5);
 
+        // Store the median of this group of 5
+        medians.push_back(rankByOrder(five, (five.size()+1)/2));
+
+        // DEBUG
         cerr << "Group "  << i << ":\n";
         for (T x : five)
             cerr << x << "\t";
         cerr << "\n";
+    }
 
-        // Store the median of this group of 5
-        medians.push_back(rankByOrder(five, (five.size()+1)/2));
+    if (a.size() % 5) {
+        auto temp = vector<T>(a.begin()+5*numberOfGroups, a.end());
+        medians.push_back(rankByOrder(temp, (temp.size()+1)/2));
     }
 
    cerr << "Medians:\n";
@@ -73,7 +87,7 @@ T linearTimeSelection(vector<T> a, unsigned int k) {
     T median = linearTimeSelection(medians, (medians.size()+1)/2);
 
     // 2. Parition around the median of medians
-    //cerr << "Parition elemnt aka median: " << median << "\n";
+    //cerr << "Parition element aka median: " << median << "\n";
     pair<vector<T>, vector<T>> partitioned_set = partition(a, median);
     vector<T> L = partitioned_set.first;
     vector<T> R = partitioned_set.second;
@@ -102,13 +116,22 @@ T linearTimeSelection(vector<T> a, unsigned int k) {
 }
 
 int main () { 
-    // Seems to work with both these sets
+    // Has passed every loose test I've thrown it
     vector<int> set = {10, 8, 1, 5, 4, 2, 3, 6, 9, 7};    
-    vector<int> set2 = {12, 3, 45, 7, 8, 92, 10000, 0, 4, 22};
+    vector<int> set2 = {120000, 12, 3, 45, 7, 8, 92, 10000, 0, 4, 22, 2, 10001};
     unsigned int k = 0;
-    cout << "Which order statistic would like out of an array of size " << set2.size() << "?\n";
-    cin >> k;
-    
-    cout << k << "-th order statistic: " << linearTimeSelection(set2, k) << endl;;
+    cout << "Which order statistic would like out of an array of size " << set2.size() << "? (press '0' to quit)\n";
+
+    cout << endl;
+    for (auto x : set2) 
+        cout << x << "\t";
+    cout << endl;
+
+    while (true) {    
+        cin >> k;
+        if (k == 0)
+            break;
+        cout << k << "-th order statistic: " << linearTimeSelection(set2, k) << endl;;
+    }
     return 0; 
 }
